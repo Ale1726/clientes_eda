@@ -4,13 +4,6 @@ from gd import *
 from datetime import datetime
 
 
-list_dbs_clt_activos = [db_soi, db_meca, db_sims, db_sipe, db_tas, db_sirac]
-
-path_exit = "/home/ale1726/proyects/datalake/clientes/data"
-
-path_logs = "/home/ale1726/proyects/datalake/clientes/data/logs"
-
-date_now = datetime.now().strftime("%d_%m_%Y") 
 
 querys_ctls_activos = {
     "MECA" : """
@@ -394,7 +387,7 @@ querys_ctls_activos = {
         """,
     
     "SIRAC" : """
-     WITH CLT_ACT_X_CONTRATO AS (
+    WITH CLT_ACT_X_CONTRATO AS (
     	SELECT cxc.CODIGO_CLIENTE, cxc.NUMERO_CONTRATO, c.FECHA_APERTURA, c.FECHA_VENCIMIENTO, c.MONTO_APROBADO, c.MONTO_DISPONIBLE,  c.CODIGO_LINEA_FINANCIERA
         FROM SIRAC.PR_CONTRATOS_X_CLIENTE cxc
         INNER JOIN SIRAC.PR_CONTRATOS c ON cxc.NUMERO_CONTRATO = c.NUMERO_CONTRATO
@@ -417,6 +410,10 @@ querys_ctls_activos = {
     	SELECT CIM.*, MD.NOMBRE ENTIDAD_FEDERATIVA     
     	FROM CLT_INFO_MUN CIM
     	LEFT JOIN SIRAC.MG_DEPARTAMENTOS MD ON  MD.CODIGO_PAIS = CIM.CODIGO_PAIS AND MD.CODIGO_DEPARTAMENTO = CIM.CODIGO_DEPARTAMENTO
+    ), CLT_DESCR_LINEA_FINANCIERA AS(
+    	SELECT CIEF.*,  MGLF.DESCRIPCION PRODUCTO_CONTRATADO
+    	FROM CLT_INFO_ENT_FED CIEF
+    	LEFT JOIN SIRAC.MG_LINEA_FINANCIERAS MGLF ON CIEF.CODIGO_LINEA_FINANCIERA = MGLF.CODIGO_LINEA_FINANCIERA
     ) SELECT 
     	'' NEGOCIO, 
     	'' NOMBRE_O_RAZON_SOCIAL,
@@ -450,17 +447,30 @@ querys_ctls_activos = {
     	FIEL,
     	REPRESENTANTE_LEGAL,
     	CODIGO_TIPO_IDENTIFICACION TIPO_PERSONA, 
-    	'' PRODUCTO_CONTRATADO, 
+    	PRODUCTO_CONTRATADO, 
     	'SIRAC' SISTEMA_ORIGEN
-    FROM CLT_INFO_ENT_FED
+    FROM CLT_DESCR_LINEA_FINANCIERA
+    """,
+    "SIAG": """ 
+    
     """
 }
+
+list_dbs_clt_activos = [db_siag, db_sims, db_sipe, db_sirac, db_tas]
+
+path_exit = "/home/ale1726/proyects/datalake/clientes/data/productos"
+
+path_logs = "/home/ale1726/proyects/datalake/clientes/data/productos/logs"
+
+date_now = datetime.now().strftime("%d_%m_%Y") 
 
 
 for database in list_dbs_clt_activos:
     try: 
-       get_table(path_exit = path_exit , db = database, name_archivo = f"Transformacion_clientes_{database['NAME']}" , query  = querys_ctls_activos[database["NAME"]])  
+       get_table(path_exit = path_exit , db = database, name_archivo = f"productos_clientes_{database['NAME']}" , query  = querys_ctls_activos[database["NAME"]])  
     except Exception as error:
-        log_file =  os.path.join(path_logs,f"errors_{database['NAME']}_{date_now}.log")
+        repositorio_log = os.path.join(path_logs, date_now)
+        os.makedirs(repositorio_log, exist_ok=True)
+        log_file =  os.path.join(repositorio_log,f"errors_productos_{database['NAME']}_{date_now}.log")
         with open(log_file, 'a') as archivo:
             archivo.write(str(error))

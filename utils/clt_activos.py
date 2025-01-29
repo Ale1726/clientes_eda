@@ -4,17 +4,70 @@ from gd import *
 from datetime import datetime
 
 
-list_dbs_clt_activos = [db_soi, db_meca, db_sims, db_sipe, db_tas, db_sirac]
-
-path_exit = "/home/ale1726/proyects/datalake/clientes/data"
-
-path_logs = "/home/ale1726/proyects/datalake/clientes/data/logs"
-
-date_now = datetime.now().strftime("%d_%m_%Y") 
-
 querys_ctls_activos = {
     "SIAG" : """
-    
+    WITH CLIENTES_ACTIVOS AS (
+	SELECT * 
+	FROM ( 
+    	SELECT INTER_CLAVE, CLAVE CLAVE_GARANTIA, FUNFAC_CLAVE, MONTO_CREDITO,  IMPORTE_DISPOSICION, PLAZO, 
+    	GRACIA, TASA_INTERES, PORCENTAJE_GARANTIZADO, MONTO_GARANTIZADO, PORCENTAJE_COMISION, CVE_CARTERA, CVE_PORTAFOLIO 
+    	FROM GIA.GIA_GARANTIAS 
+    	WHERE ESTATUS_GARANTIA IS NULL OR ESTATUS_GARANTIA = 'R'
+		) RESULTADO
+	INNER JOIN GIA.GIA_INTERMEDIARIOS INT ON RESULTADO.INTER_CLAVE = INT.CLAVE
+	), PARTITION_CLTS AS (
+	        SELECT 
+	            CA.*, 
+	            ROW_NUMBER() OVER (PARTITION BY CA.CLAVE ORDER BY CA.CLAVE) AS RN
+	        FROM 
+	            CLIENTES_ACTIVOS CA
+	), CLIENTES_UNICOS AS (
+		SELECT * 
+		FROM PARTITION_CLTS 
+		WHERE RN = 1
+	),  INTERMEDIARIO_TELEFONO AS (
+		SELECT 
+	    INTER_CLAVE, 
+	    LISTAGG(TELEFONO, ' -- ') WITHIN GROUP (ORDER BY TELEFONO) AS TELEFONOS
+		FROM 
+		    GIA.GIA_FUNCIONARIOS_FACULTADOS
+		GROUP BY 
+	    	INTER_CLAVE
+	), CLT_UNICOS_TEL AS (
+		SELECT CU.*, IT.TELEFONOS
+		FROM CLIENTES_UNICOS CU
+		LEFT JOIN INTERMEDIARIO_TELEFONO IT ON IT.INTER_CLAVE =  CU.CLAVE
+	) SELECT  '' NEGOCIO, 
+	    	DESCRIPCION NOMBRE_O_RAZON_SOCIAL,
+	    	CLAVE NUMERO_CLIENTE, 
+	    	'VIGENTE' ESTATUS, 
+	    	'' NUMERO_CONTRATO,
+	    	'N/A' GENERO,  
+	    	'' FECHA_NAC_O_CONST, 
+	    	'' ENTIDAD_FEDERATIVA_NACIMIENTO, 
+	    	'' PAIS_DE_NACIMIENTO, 
+	    	'' NACIONALIDAD,
+	    	'' PROFESION,
+	    	'' CALLE,
+	    	'' NUMERO_EXTERIOR, 
+	    	'' NUMERO_INTERIOR, 
+	    	'' COLONIA_URBANIZACION, 
+	    	'' DELEGACION_MUNICIPIO, 
+	    	'' CIUDAD_POBLACION, 
+	    	'' ENTIDAD_FEDERATIVA, 
+	    	'' CODIGO_POSTAL, 
+	    	'' PAIS,
+	    	TELEFONOS TELEFONO, 
+	    	'' CORREO_ELECTRONICO, 
+	    	CLAVE_INTERMEDIARIO_SIFC RFC, 
+	    	'' CURP, 
+	    	'' FIEL,
+	    	'' REPRESENTANTE_LEGAL,
+	    	TIPO_FINANCIERA TIPO_PERSONA, 
+	    	'' PRODUCTO_CONTRATADO, 
+	    	'SIAG' SISTEMA_ORIGEN
+	FROM CLT_UNICOS_TEL
+ 	ORDER BY NOMBRE_O_RAZON_SOCIAL 
     """,  
     "SOI"  : """ 
     WITH CLIENTES AS (
@@ -47,12 +100,13 @@ querys_ctls_activos = {
     	FROM CLIENTES_SOI_PLAZA
     	WHERE PL_ACTIVO = 'S' OR PL_ACTIVO IS NULL OR BANOM_BAN = 'AMSTERDAM-ROTTERDAM BANK.'
     	GROUP BY BACVE_BANC, BANOM_BAN, BACVE_PAIS, BATIP_BANC, BANACIONAL, BA_ACTIVO, PAPAIS
-    ) SELECT '' NEGOCIO, BANOM_BAN NOMBRE_O_RAZON_SOCIAL,  BACVE_BANC NUMERO_CLIENTE, 'ACTIVO' ESTATUS, 
+    ) SELECT '' NEGOCIO, BANOM_BAN NOMBRE_O_RAZON_SOCIAL,  BACVE_BANC NUMERO_CLIENTE, 'VIGENTE' ESTATUS, '' NUMERO_CONTRATO, 
     'N/A' GENERO, '' FECHA_NAC_O_CONST,  '' ENTIDAD_FEDERATIVA_NACIMIENTO, '' PAIS_DE_NACIMIENTO, 
-     BANOM_BAN NACIONALIDAD, '' PROFESION, PLDOM_CALLE CALLE, PLDOM_NUMERO NUMERO_EXTERIOR, '' COLONIA_URBANIZACION, 
+     BANOM_BAN NACIONALIDAD, '' PROFESION, PLDOM_CALLE CALLE, PLDOM_NUMERO NUMERO_EXTERIOR, '' NUMERO_INTERIOR, '' COLONIA_URBANIZACION, 
      '' DELEGACION_MUNICIPIO, PLDOM_CIUDAD CIUDAD_POBLACION, PLDOM_ESTADO ENTIDAD_FEDERATIVA, PLDOM_CP CODIGO_POSTAL, PAPAIS PAIS, '' TELEFONO,
-     '' CORREO, PLRFC RFC, '' CURP, '' FIEL, '' REPRESENTANTE_LEGAL, 'PM' TIPO_PERSONA, 'SOI' SISTEMA_ORIGEN, '' PRODUCTO
+     '' CORREO_ELECTRONICO, PLRFC RFC, '' CURP, '' FIEL, '' REPRESENTANTE_LEGAL, 'PM' TIPO_PERSONA, 'SOI' SISTEMA_ORIGEN, '' PRODUCTO_CONTRATADO
      FROM CLIENTES_AGRUPADOS
+     ORDER BY NOMBRE_O_RAZON_SOCIAL 
     """,
     
     "MECA" : """
@@ -182,6 +236,7 @@ querys_ctls_activos = {
     	'' PRODUCTO_CONTRATADO, 
     	'SIPE' SISTEMA_ORIGEN 
     FROM BAN_PAIS
+    ORDER BY NOMBRE_O_RAZON_SOCIAL 
     """,
     
     "SIMS" : """
@@ -229,6 +284,7 @@ querys_ctls_activos = {
     	'' PRODUCTO_CONTRATADO, 
     	'SIMS' SISTEMA_ORIGEN
     FROM CLTS_CIUDADES
+    ORDER BY NOMBRE_O_RAZON_SOCIAL 
     """, 
  
     "TAS"  : """
@@ -279,6 +335,7 @@ querys_ctls_activos = {
     	'' PRODUCTO_CONTRATADO, 
     	'TAS' SISTEMA_ORIGEN
     FROM CLIENTES_CON_TIP_INV
+    ORDER BY NOMBRE_O_RAZON_SOCIAL 
     """,
     
     "SIRAC" : """
@@ -294,7 +351,7 @@ querys_ctls_activos = {
     	FROM CLT_ACT_X_CONTRATO CAXC
     	INNER JOIN SIRAC.MG_CLIENTES MG ON MG.CODIGO_CLIENTE = CAXC.CODIGO_CLIENTE
     ), CLT_INFO_P AS (
-    	SELECT CIXC.*, x.NOMBRE PAIS, x.NACIONALIDAD
+    	SELECT CIXC.*, x.NOMBRE PAIS
     	FROM CLT_INFO_X_CONTRATO CIXC
     	LEFT JOIN SIRAC.MG_PAISES x ON CIXC.CODIGO_PAIS = x.CODIGO_PAIS
     ), CLT_INFO_MUN AS (
@@ -312,7 +369,12 @@ querys_ctls_activos = {
             ROW_NUMBER() OVER (PARTITION BY CIM.CODIGO_CLIENTE ORDER BY CIM.CODIGO_CLIENTE) AS RN
         FROM 
             CLT_INFO_ENT_FED CIM
-    ) SELECT 
+    ), CLIENTES_UNICOS_PN AS (
+    	SELECT CU.*, MGP.NOMBRE DESC_PAIS_NACIMIENTO, MGP.NACIONALIDAD
+    	FROM CLIENTES_UNICOS CU
+    	LEFT JOIN SIRAC.MG_PAISES MGP ON CU.PAIS_NACIMIENTO = MGP.CODIGO_PAIS
+    	)
+    SELECT 
      	'' NEGOCIO, 
     	'' NOMBRE_O_RAZON_SOCIAL,
     	NOMBRES, PRIMER_APELLIDO, SEGUNDO_APELLIDO, RAZON_SOCIAL, NOMBRE_COMERCIAL,
@@ -323,7 +385,7 @@ querys_ctls_activos = {
     	SEXO GENERO,  
     	FECHA_DE_NACIMIENTO FECHA_NAC_O_CONST, 
     	'' ENTIDAD_FEDERATIVA_NACIMIENTO, 
-    	PAIS_NACIMIENTO PAIS_DE_NACIMIENTO, 
+    	DESC_PAIS_NACIMIENTO PAIS_DE_NACIMIENTO, 
     	NACIONALIDAD NACIONALIDAD,
     	CODIGO_PROFESION PROFESION,
     	'' CALLE,
@@ -347,16 +409,30 @@ querys_ctls_activos = {
     	CODIGO_TIPO_IDENTIFICACION TIPO_PERSONA, 
     	'' PRODUCTO_CONTRATADO, 
     	'SIRAC' SISTEMA_ORIGEN
-    FROM CLIENTES_UNICOS
+    FROM CLIENTES_UNICOS_PN
     WHERE RN = 1
+    ORDER BY NOMBRE_O_RAZON_SOCIAL 
     """,  
 }
 
 
+
+list_dbs_clt_activos = [db_siag, db_soi, db_meca, db_sims, db_sipe, db_tas, db_sirac]
+
+#list_dbs_clt_activos=[db_sirac]
+
+path_exit = "/home/ale1726/proyects/datalake/clientes/data"
+
+path_logs = "/home/ale1726/proyects/datalake/clientes/data/logs"
+
+date_now = datetime.now().strftime("%d_%m_%Y") 
+
 for database in list_dbs_clt_activos:
-    try: 
+    try:
        get_table(path_exit = path_exit , db = database, name_archivo = f"Clientes_activos_{database['NAME']}" , query  = querys_ctls_activos[database["NAME"]])  
     except Exception as error:
-        log_file =  os.path.join(path_logs,f"errors_clts_{database['NAME']}_{date_now}.log")
+        repositorio_log = os.path.join(path_logs, date_now)
+        os.makedirs(repositorio_log, exist_ok=True)
+        log_file =  os.path.join(repositorio_log,f"errors_clts_{database['NAME']}_{date_now}.log")
         with open(log_file, 'a') as archivo:
             archivo.write(str(error))

@@ -69,15 +69,16 @@ def clean_transition_aux(lista):
 
 def clean_simetria(df, identificador1:str, identificador2:str):
     """
-    Genera un dataframe con un estimado de almacenamiento de los sistemas dados, exporta u envia a una base de datos.
     
     Args:
-        idx (list): Lista de tuplas con las posibilidades de combinacion 
+       
     Returns:
-        pd.DataFrame: DataFrame concatenado con los metadatos de los sistemas.
-        pd.DataFrame: DataFrame transformado con los detalles del almacenamiento promedio.
-        pd.DataFrame: DataFrame transformado con los detalles del almacenamiento.
+        
     """
+    df_temp = df[df["NUM_CLIENTE_1"] == df["NUM_CLIENTE_2"]]
+    
+    df = df[df["NUM_CLIENTE_1"] != df["NUM_CLIENTE_2"]]
+    
     idx = [((id1,id2),(id2,id1)) for id1, id2 in zip(df[identificador1].to_list(), df[identificador2].to_list())]
     
     for i in idx:
@@ -88,6 +89,7 @@ def clean_simetria(df, identificador1:str, identificador2:str):
 
     ix = [x[0] for x in ix]
     df = df.loc[ix]
+    df = pd.concat([df,df_temp],ignore_index=True)
     return df
 
 
@@ -100,7 +102,7 @@ def clean_transition(df, identificador1:str, identificador2:str):
     return clean_df
     
 
-def compara_nombres(df1, df2, col_nom_1, col_nom_2, id_cliente1, id_cliente2, criterio_similitud):
+def compara_nombres(df1, df2, col_nom_1, col_nom_2, id_cliente1, id_cliente2, criterio_similitud, dfs_equal = False):
     """
     Compara los nombres de dos dataframe mediante un umbral de similitud.
 
@@ -112,6 +114,7 @@ def compara_nombres(df1, df2, col_nom_1, col_nom_2, id_cliente1, id_cliente2, cr
         id_cliente1(str): id del cliente en la primera tabla.
         id_cliente2(str): id del cliente en la segunda tabla.     
         criterio_similitud (int): criterio de similitud.
+        dfs_equal(bool): los dfs son iguales
 
     Returns:
         list: Listas de resultados con las coincidencias encontradas.
@@ -135,7 +138,11 @@ def compara_nombres(df1, df2, col_nom_1, col_nom_2, id_cliente1, id_cliente2, cr
             "CLIENTE_2" : CR[1]
         }
     )
-    df_aux = df_comparacion[df_comparacion["NUM_CLIENTE_1"]!=df_comparacion["NUM_CLIENTE_2"]]
+    if dfs_equal:
+        df_aux = df_comparacion[df_comparacion["NUM_CLIENTE_1"]!=df_comparacion["NUM_CLIENTE_2"]]
+    else:
+        df_aux = df_comparacion.copy()
+        
     df_aux = clean_simetria(df_aux,"NUM_CLIENTE_1","NUM_CLIENTE_2")
     df_aux = clean_transition(df_aux,"NUM_CLIENTE_1","NUM_CLIENTE_2")
     return df_aux
@@ -155,13 +162,14 @@ def agregar_asociaciones_clientes(clt_repetidos, df):
             if columna != "NUMERO_CLIENTE":
                 lista_temp  = []; clts_asociados = grouped_df_cts["NUM_CLIENTES_ASOCIADOS"].loc[grouped_df_cts["NUM_CLIENTE_1"] == num_cliente].iloc[0]
                 valor_cliente = df[columna].loc[df["NUMERO_CLIENTE"] == num_cliente].iloc[0]
-                if not pd.isna(valor_cliente) and "NO SE TIENE REGISTRADA LA INFORMACION" not in valor_cliente:
+                if pd.notna(valor_cliente) and "NO SE TIENE REGISTRADA LA INFORMACION" not in str(valor_cliente):
                     lista_temp.append(valor_cliente)
                 else: 
                     lista_temp.append("-")
                 for num_cliente_2 in clts_asociados:
                     if columna != "NOMBRE_O_RAZON_SOCIAL":
                         filtred_value = df[columna].loc[df["NUMERO_CLIENTE"] == num_cliente_2].iloc[0]
+                        filtred_value = str(filtred_value) if pd.notna(filtred_value) else filtred_value
                         if not pd.isna(filtred_value) and "NO SE TIENE REGISTRADA LA INFORMACION" not in filtred_value:
                             lista_temp.append(filtred_value)   
                         else:
@@ -172,9 +180,9 @@ def agregar_asociaciones_clientes(clt_repetidos, df):
                 lista_temp = list(set(lista_temp))
                 if len(lista_temp) > 1 and "-" in lista_temp:
                     lista_temp.remove("-")
-                dict_temp[columna] = ", ".join(lista_temp)
+                dict_temp[columna] = ", ".join([str(i) for i in lista_temp]) 
             else:
-                numeros_de_clientes = [num_cliente] + clts_asociados
+                numeros_de_clientes = [str(num_cliente)] + [str(cliente) for cliente in clts_asociados]
                 dict_temp[columna] = ", ".join(numeros_de_clientes)
         data.append(dict_temp)
 
