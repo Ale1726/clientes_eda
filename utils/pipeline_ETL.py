@@ -353,7 +353,8 @@ def union_tablas_clientes(dataframes, nombre_col, num_col, umbral, ruta_exit):
     name_archivo = os.path.join(ruta_exit,"CLientesT_FINAL_ACTIVOS.csv")  
     df_combinado.to_csv(name_archivo, index=False) """ 
     
-      
+def limpieza():
+    print()     
     
    
 if __name__ == "__main__":
