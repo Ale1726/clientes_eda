@@ -244,3 +244,34 @@ agrupado_producto_monto_seg_moneda_persona = (
 
 agrupado_producto_monto_seg_moneda_persona = agrupado_producto_monto_seg_moneda_persona.rename(columns={col_producto: 'PRODUCTO'}) 
 agrupado_producto_monto_seg_moneda_persona.to_csv(os.path.join(path_exit_agrupados,'agrupado_producto_monto_seg_moneda_persona.csv'), index=False)
+
+
+####################################################################
+
+agrupado_año_clientes_seg_prod = (
+    df_productos.groupby(["AÑO_REGISTRO", "CODIGO_TIPO_IDENTIFICACION", "NOMBRE_COMPLETO/RAZON_SOCIAL"], as_index=False)
+    .agg(
+        PRODUCTOS=(col_producto, "count"),
+        TOTAL_MONTO_NO_FORMATEADO=("MONTO_INICIAL", "sum"),  
+        TOTAL_MONTO=("MONTO_INICIAL", "sum"),  
+        SECTOR=('TIPO_SECTOR', lambda x: "| ".join(x.unique())),
+        MONTO_MAXIMO=("MONTO_INICIAL", "max"),
+        MONTO_MINIMO=("MONTO_INICIAL", "min")
+    )
+    .assign(
+        TIPO_PERSONA=lambda df: df["CODIGO_TIPO_IDENTIFICACION"].apply(lambda x: "PERSONA FÍSICA" if x == 5 else "PERSONA MORAL"),
+        PROMEDIO_MONTO=lambda df: df["TOTAL_MONTO"] / df["PRODUCTOS"]
+    )
+)
+
+
+agrupado_año_clientes_seg_prod["TOTAL_MONTO"] = agrupado_año_clientes_seg_prod["TOTAL_MONTO"].apply(lambda x: "{:,.2f}".format(float(x)))
+agrupado_año_clientes_seg_prod["PROMEDIO_MONTO"] = agrupado_año_clientes_seg_prod["PROMEDIO_MONTO"].apply(lambda x: "{:,.2f}".format(float(x)) if pd.notna(x) else "0.00")
+agrupado_año_clientes_seg_prod["MONTO_MAXIMO"] = agrupado_año_clientes_seg_prod["MONTO_MAXIMO"].apply(lambda x: "{:,.2f}".format(float(x)) if pd.notna(x) else "0.00")
+agrupado_año_clientes_seg_prod["MONTO_MINIMO"] = agrupado_año_clientes_seg_prod["MONTO_MINIMO"].apply(lambda x: "{:,.2f}".format(float(x)) if pd.notna(x) else "0.00")
+
+
+
+agrupado_año_clientes_seg_prod = agrupado_año_clientes_seg_prod.rename(columns={col_producto: 'PRODUCTO'}) 
+
+agrupado_año_clientes_seg_prod.to_csv(os.path.join(path_exit_agrupados,'agrupado_año_clientes_seg_prod.csv'), index=False)
