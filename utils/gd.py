@@ -33,7 +33,7 @@ def get_table(path_exit: str, db: dict, name_archivo: str = None, name_table: st
 
     # Determinar la extensión del archivo y construir la ruta del archivo
     if name_table:
-        cursor.execute(f'SELECT COUNT(*) FROM {db["SCHEMA"]}.{name_table}')
+        cursor.execute(f'SELECT COUNT(1) FROM {db["SCHEMA"]}.{name_table}')
         num_rows = cursor.fetchone()[0]
         extension = 'csv' if num_rows < 30000 else 'dat'
         if not name_archivo:
