@@ -9,7 +9,7 @@ import json
 import os
 
 
-df_productos = pd.read_csv("/home/ale1726/proyects/datalake/clientes/data/productos/SIRAC/data/06_02_2025/productos_clientes_SIRAC.dat", low_memory=False)
+df_productos = pd.read_csv("/home/ale1726/proyects/datalake/clientes/data/productos/SIRAC/data/18_02_2025/productos_clientes_SIRAC.dat", low_memory=False)
 
 
 df_productos.loc[df_productos["AÑO_VENCIMIENTO"] == 2264, "FECHA_VENCIMIENTO"] = datetime(2031, 7, 31)
@@ -26,8 +26,7 @@ df_productos["NOMBRE_COMPLETO/RAZON_SOCIAL"] = df_productos.apply(
     axis=1
 )
 
-
-path_exit_agrupados = "/home/ale1726/proyects/datalake/clientes/data/productos/SIRAC/data/06_02_2025/agrupados"
+path_exit_agrupados = "/home/ale1726/proyects/datalake/clientes/data/productos/SIRAC/data/18_02_2025/agrupados"
 
 def formato_numero(valor):
     if valor >= 1_000_000_000:  # Billones
@@ -59,7 +58,7 @@ data_kps = {
     }
 
 
-output_path = "/home/ale1726/proyects/datalake/clientes/data/productos/SIRAC/data/06_02_2025/agrupados/data_kps.json" 
+output_path = "/home/ale1726/proyects/datalake/clientes/data/productos/SIRAC/data/18_02_2025/agrupados/data_kps.json" 
 with open(output_path, "w", encoding="utf-8") as json_file:
     json.dump(data_kps, json_file, indent=4, ensure_ascii=False)
     
@@ -114,9 +113,11 @@ agrupado_año_mes_vencimiento_contratos =  (
 agrupado_año_mes_vencimiento_contratos.to_csv(os.path.join(path_exit_agrupados,'agrupado_año_mes_vencimiento_contratos.csv'), index=False)
 
 
-col_producto = 'PRODUCTO' ## 'PRODUCTO', 'DESC_LINEA_FINANCIERA'
-
-
+########################### Columna Producto ###########################
+#                                                                      #
+col_producto = 'DESC_LINEA_FINANCIERA' # Option 'PRODUCTO', 'DESC_LINEA_FINANCIERA' #
+#                                                                      #
+########################################################################
 #### agrupación tiempo y productos
 
 agrupado_producto_clts = (
@@ -208,6 +209,8 @@ agrupado_producto_monto_all = (
     ).assign(promedio_monto_total_x_producto = lambda df: round(df['monto_aprobado_total'] / df['cantidad_lineas']))
 ).sort_values(by=['monto_aprobado_total'])
 
+agrupado_producto_monto_all["monto_minimo"] = agrupado_producto_monto_all["monto_minimo"].apply(lambda x: x if x > 0 else 0)
+agrupado_producto_monto_all["monto_minimo"] = agrupado_producto_monto_all["monto_minimo"].apply(lambda x: x if x > 0 else 0)
 agrupado_producto_monto_all = agrupado_producto_monto_all.rename(columns={col_producto: 'PRODUCTO'}) 
 agrupado_producto_monto_all.to_csv(os.path.join(path_exit_agrupados,'agrupado_producto_monto_all.csv'), index=False)
 
@@ -224,6 +227,8 @@ agrupado_producto_monto_seg_moneda = (
     ).assign(promedio_monto_total_x_producto = lambda df: round(df['monto_aprobado_total'] / df['cantidad_lineas']))
 ).sort_values(by=['monto_aprobado_total'])
 
+agrupado_producto_monto_seg_moneda["monto_minimo"] = agrupado_producto_monto_seg_moneda["monto_minimo"].apply(lambda x: x if x > 0 else 0)
+agrupado_producto_monto_seg_moneda["monto_minimo"] = agrupado_producto_monto_seg_moneda["monto_minimo"].apply(lambda x: x if x > 0 else 0)
 
 agrupado_producto_monto_seg_moneda = agrupado_producto_monto_seg_moneda.rename(columns={col_producto: 'PRODUCTO'}) 
 agrupado_producto_monto_seg_moneda.to_csv(os.path.join(path_exit_agrupados,'agrupado_producto_monto_seg_moneda.csv'), index=False)
@@ -241,6 +246,8 @@ agrupado_producto_monto_seg_moneda_persona = (
     ).assign(promedio_monto_total_x_producto = lambda df: round(df['monto_aprobado_total'] / df['cantidad_lineas']))
 ).sort_values(by=['monto_aprobado_total'])
 
+agrupado_producto_monto_seg_moneda_persona["monto_minimo"] = agrupado_producto_monto_seg_moneda_persona["monto_minimo"].apply(lambda x: x if x > 0 else 0)
+agrupado_producto_monto_seg_moneda_persona["monto_minimo"] = agrupado_producto_monto_seg_moneda_persona["monto_minimo"].apply(lambda x: x if x > 0 else 0)
 
 agrupado_producto_monto_seg_moneda_persona = agrupado_producto_monto_seg_moneda_persona.rename(columns={col_producto: 'PRODUCTO'}) 
 agrupado_producto_monto_seg_moneda_persona.to_csv(os.path.join(path_exit_agrupados,'agrupado_producto_monto_seg_moneda_persona.csv'), index=False)

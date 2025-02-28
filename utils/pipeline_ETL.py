@@ -358,33 +358,41 @@ def limpieza():
     
    
 if __name__ == "__main__":
-    df_meca = pd.read_csv("/home/ale1726/proyects/datalake/clientes/data/Clientes_activos_MECA.dat")
-    df_siag = pd.read_csv("/home/ale1726/proyects/datalake/clientes/data/Clientes_activos_SIAG.dat")
-    df_sims = pd.read_csv("/home/ale1726/proyects/datalake/clientes/data/Clientes_activos_SIMS.dat")
-    df_sipe = pd.read_csv("/home/ale1726/proyects/datalake/clientes/data/Clientes_activos_SIPE.dat")
-    df_sirac = pd.read_csv("/home/ale1726/proyects/datalake/clientes/data/Clientes_activos_SIRAC.dat")
-    df_soi = pd.read_csv("/home/ale1726/proyects/datalake/clientes/data/Clientes_activos_SOI.dat")
-    df_tas = pd.read_csv("/home/ale1726/proyects/datalake/clientes/data/Clientes_activos_TAS.dat")
+    path_dfs = "/home/ale1726/proyects/datalake/clientes/data/clientes_activos/24_02_2025"
     
     ruta_exit = "/home/ale1726/proyects/datalake/clientes/data/ETL"
     
-    transformacion_clientes_meca(df_meca,ruta_exit)
-    transformacion_clientes_siag(df_siag,ruta_exit)
-    transformacion_clientes_sims(df_sims,ruta_exit)
-    transformacion_clientes_sipe(df_sipe,ruta_exit)
-    transformacion_clientes_sirac(df_sirac,ruta_exit)
-    transformacion_clientes_soi(df_soi,ruta_exit)
-    transformacion_clientes_tas(df_tas,ruta_exit)
+    date_now = datetime.now().strftime("%d_%m_%Y") 
+    path_exit_date_now =  os.path.join(ruta_exit, date_now)
+    os.makedirs(path_exit_date_now, exist_ok=True)
+    
+    df_meca = pd.read_csv (os.path.join(path_dfs,"Clientes_activos_MECA.dat" ))
+    df_siag = pd.read_csv (os.path.join(path_dfs,"Clientes_activos_SIAG.dat" ))
+    df_sims = pd.read_csv (os.path.join(path_dfs,"Clientes_activos_SIMS.dat" ))
+    df_sipe = pd.read_csv (os.path.join(path_dfs,"Clientes_activos_SIPE.dat" ))
+    df_sirac = pd.read_csv(os.path.join(path_dfs,"Clientes_activos_SIRAC.dat"))
+    df_soi = pd.read_csv  (os.path.join(path_dfs,"Clientes_activos_SOI.dat"  ))
+    df_tas = pd.read_csv  (os.path.join(path_dfs,"Clientes_activos_TAS.dat"  ))
+    
+    
+    transformacion_clientes_meca(df_meca,path_exit_date_now)
+    transformacion_clientes_siag(df_siag,path_exit_date_now)
+    transformacion_clientes_sims(df_sims,path_exit_date_now)
+    transformacion_clientes_sipe(df_sipe,path_exit_date_now)
+    transformacion_clientes_sirac(df_sirac,path_exit_date_now)
+    transformacion_clientes_soi(df_soi,path_exit_date_now)
+    transformacion_clientes_tas(df_tas,path_exit_date_now)
 
-    df_mecaT = pd.read_csv(os.path.join(ruta_exit,"CLientesT_MECA.csv"))
-    df_siagT = pd.read_csv(os.path.join(ruta_exit,"CLientesT_SIAG.csv"))
-    df_simsT = pd.read_csv(os.path.join(ruta_exit,"CLientesT_SIMS.csv"))
-    df_sipeT = pd.read_csv(os.path.join(ruta_exit,"CLientesT_SIPE.csv"))
-    df_siracT = pd.read_csv(os.path.join(ruta_exit,"CLientesT_SIRAC.csv"))
-    df_soiT = pd.read_csv(os.path.join(ruta_exit,"CLientesT_SOI.csv"))
-    df_tasT = pd.read_csv(os.path.join(ruta_exit,"CLientesT_TAS.csv"))
+    df_mecaT = pd.read_csv(os.path.join(path_exit_date_now,"CLientesT_MECA.csv"))
+    df_siagT = pd.read_csv(os.path.join(path_exit_date_now,"CLientesT_SIAG.csv"))
+    df_simsT = pd.read_csv(os.path.join(path_exit_date_now,"CLientesT_SIMS.csv"))
+    df_sipeT = pd.read_csv(os.path.join(path_exit_date_now,"CLientesT_SIPE.csv"))
+    df_siracT = pd.read_csv(os.path.join(path_exit_date_now,"CLientesT_SIRAC.csv"))
+    df_soiT = pd.read_csv(os.path.join(path_exit_date_now,"CLientesT_SOI.csv"))
+    df_tasT = pd.read_csv(os.path.join(path_exit_date_now,"CLientesT_TAS.csv"))
     dataframes = [df_mecaT, df_simsT, df_sipeT, df_siracT, df_soiT, df_tasT, df_siagT] 
-    union_tablas_clientes(dataframes, "NOMBRE_O_RAZON_SOCIAL", "NUMERO_CLIENTE", 95, "/home/ale1726/proyects/datalake/clientes/data/ETL")
+    
+    union_tablas_clientes(dataframes, "NOMBRE_O_RAZON_SOCIAL", "NUMERO_CLIENTE", 95, path_exit_date_now)
     
     
     
