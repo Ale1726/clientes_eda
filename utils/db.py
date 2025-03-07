@@ -26,5 +26,6 @@ db_sori=   {'NAME':config['sori']['name'],'USER':config['sori']['user'],'PSSWD':
 db_sirys=  {'NAME':config['sirys']['name'],'USER':config['sirys']['user'],'PSSWD':config['sirys']['psswd'],'DSN':config['sirys']['dsn'],'SCHEMA':config['sirys']['schema'],'tab_clts':config['sirys']['table_clts']}
 db_soi =   {'NAME':config['soi']['name'],'USER':config['soi']['user'],'PSSWD':config['soi']['psswd'],'DSN':config['soi']['dsn'],'SCHEMA':config['soi']['schema'],'tab_clts':config['soi']['table_clts']}
 db_sideca= {'NAME':config['sideca']['name'],'USER':config['sideca']['user'],'PSSWD':config['sideca']['psswd'],'DSN':config['sideca']['dsn'],'SCHEMA':config['sideca']['schema']}
+db_sifc = {'NAME':config['sifc']['name'],'USER':config['sifc']['user'],'PSSWD':config['sifc']['psswd'],'DSN':config['sifc']['dsn'],'SCHEMA':config['sifc']['schema']}
 
 NOMBRE_NO_VALIDOS = ["NO APLICA", "N/A"]
