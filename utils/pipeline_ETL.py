@@ -358,7 +358,8 @@ def limpieza():
     
    
 if __name__ == "__main__":
-    path_dfs = "/home/ale1726/proyects/datalake/clientes/data/clientes_activos/24_02_2025"
+    path_dfs = "/home/ale1726/proyects/datalake/clientes/data/clientes_activos/19_03_2025" 
+
     
     ruta_exit = "/home/ale1726/proyects/datalake/clientes/data/ETL"
     

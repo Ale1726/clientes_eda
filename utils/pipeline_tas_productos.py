@@ -10,12 +10,43 @@ import os
 
 
 df = pd.read_csv("/home/ale1726/proyects/datalake/clientes/data/productos/TAS/data/26_02_2025/productos_clientes_TAS_T.dat", low_memory=False)
-path_exit_agrupamiento = "/home/ale1726/proyects/datalake/clientes/data/productos/TAS/data/26_02_2025/agrupamientos"
+#temp 
+df.rename(columns=lambda x: x.replace("?", "Ñ"), inplace=True)
 
+path_exit_agrupamiento = "/home/ale1726/proyects/datalake/clientes/data/productos/TAS/data/26_02_2025/agrupamientos"
+### Filtrar datos atípicos
 df_filtred_2 = df[df["CPZO_A"]  < 50000 ]
 
+### Eleccion de subproductos 
 col_subproductos = "IINSTR"
 
+### Datos para Kpis
+monto_last_year = df_filtred_2["MONTO"][df_filtred_2["AÑO_OPE"] == 2023].mean()
+monto_year_current = df_filtred_2["MONTO"][df_filtred_2["AÑO_OPE"] == 2024].mean()
+kpsTas = {
+    "dataUpdate":  "27-Feb-2025", 
+    "cardClientes" : {
+        "totalClientes":int( df_filtred_2["NUMERO_CLIENTE"].nunique()),
+        "perCLientes": round((df["NUMERO_CLIENTE"].nunique()/numTotalClient)  * 100, 2)
+    },
+    "cardProd": {
+        "numProduct": df_filtred_2["IINSTR"].nunique(),
+        "meanClientProduct": round(df["NUMERO_CLIENTE"].count()/df_filtred_2["NUMERO_CLIENTE"].nunique(), 2),
+        "crecimiento":  round( ((num_year_current - num_last_year) / num_last_year) * 100 , 1),
+        "GraphcountProdFin": [[category, value] for category, value in zip(agrupado_año.tail(10)["AÑO_OPE"], agrupado_año.tail(10)["productos"])],
+    },
+    "cardPlazo":{
+        "meanPlazo": round(df_filtred_2["CPZO_A"].mean(),2),
+        "minPlazo": int(df_filtred_2["CPZO_A"].min()),
+        "maxPlazo": int(df_filtred_2["CPZO_A"].max()),
+        "GraphPlazo": [[category, value] for category, value in zip(agrupado_año.tail(10)["AÑO_OPE"], agrupado_año.tail(10)["plazo_promedio"])] },
+    "cardMonto": {
+        "meanMonto": round(df_filtred_2["MONTO"].mean()),
+        "minMonto": int(df_filtred_2["MONTO"].min()),
+        "maxMonto": int(df_filtred_2["MONTO"].max()),
+        "crecimiento":  round( ((monto_year_current - monto_last_year) / monto_last_year) * 100 , 1)
+    }
+}
 ### agrupado fecha operaciones año mes vs contratos
 agrupado_año = (
     df_filtred_2.groupby(["AÑO_OPE"], as_index=False)
@@ -72,6 +103,7 @@ agrupado_año_venc_mes = (
 
 agrupado_año_venc_mes.to_csv(os.path.join(path_exit_agrupamiento,"agrupado_año_venc_mes.csv"), index=False)
 
+
 ### Agrupado 2 producto vs tiempo
 
 agrupado_producto_año = (
@@ -106,3 +138,6 @@ agrupado_prod_duracion = (
 )
 
 agrupado_prod_duracion.to_csv(os.path.join(path_exit_agrupamiento,"agrupado_prod_duracion.csv"), index=False)
+
+
+

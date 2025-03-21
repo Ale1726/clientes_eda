@@ -139,7 +139,7 @@ def compara_nombres(df1, df2, col_nom_1, col_nom_2, id_cliente1, id_cliente2, cr
         }
     )
     if dfs_equal:
-        df_aux = df_comparacion[df_comparacion["NUM_CLIENTE_1"]!=df_comparacion["NUM_CLIENTE_2"]]
+        df_aux = df_comparacion[ df_comparacion["NUM_CLIENTE_1"] != df_comparacion["NUM_CLIENTE_2"] ]
     else:
         df_aux = df_comparacion.copy()
         
