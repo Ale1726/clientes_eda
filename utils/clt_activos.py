@@ -2,6 +2,8 @@ from tf import *
 from db import *
 from gd import * 
 from datetime import datetime
+import subprocess
+
 
 
 querys_ctls_activos = {
@@ -407,15 +409,14 @@ querys_ctls_activos = {
     	PAIS,
     	'' TELEFONO, 
     	'' CORREO_ELECTRONICO, 
-    	'' RFC, 
+    	NUMERO_IDENTIFICACION RFC, 
     	RFC_GEN,
-    	NUMERO_IDENTIFICACION,
-    	NUMERO_IDENTIFICACION_R,
     	CURP, 
     	FIEL,
     	REPRESENTANTE_LEGAL,
     	CODIGO_TIPO_IDENTIFICACION TIPO_PERSONA,
     	'SIRAC' SISTEMA_ORIGEN,
+		'' PRODUCTO_CONTRATADO, 
     	 TO_DATE(TO_CHAR(SYSDATE, 'YYYY-MM-DD'), 'YYYY-MM-DD') FECHA_CONSULTA
     FROM CLIENTES_ACTIVOS_PAIS_NAC
     ORDER BY CODIGO_CLIENTE
@@ -446,3 +447,8 @@ for database in list_dbs_clt_activos:
         with open(log_file, 'a') as archivo:
             archivo.write(str(error))
             
+subprocess.run([
+        "python",
+        "/home/ale1726/proyects/datalake/clientes/clientes_eda/utils/pipeline_ETL.py",
+        repositorio_data_clt
+    ])

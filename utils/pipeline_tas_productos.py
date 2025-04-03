@@ -9,11 +9,47 @@ import json
 import os
 
 
-df = pd.read_csv("/home/ale1726/proyects/datalake/clientes/data/productos/TAS/data/26_02_2025/productos_clientes_TAS_T.dat", low_memory=False)
-#temp 
+########--- rutas --###########
+
+path_data = "/home/ale1726/proyects/datalake/clientes/data/productos/TAS/data/26_02_2025"
+path_exit_agrupamiento = "/home/ale1726/proyects/datalake/clientes/data/productos/TAS/data/26_02_2025/agrupamientos"
+
+###############################
+
+df= pd.read_csv(os.path.join(path_data,"productos_clientes_TAS.dat"), 
+                engine="pyarrow",
+                dtype_backend="pyarrow")
+
 df.rename(columns=lambda x: x.replace("?", "Ñ"), inplace=True)
 
-path_exit_agrupamiento = "/home/ale1726/proyects/datalake/clientes/data/productos/TAS/data/26_02_2025/agrupamientos"
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'B�SICA', 'BÁSICA', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'M�XICO', 'MÉXICO', regex=True)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'INVERSI�N', 'INVERSIÓN', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'INSTITUCI�N', 'INSTITUCIÓN', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'M�S', 'MÁS', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'PENSI�N', 'PENSIÓN', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'M�LTIPLE', 'MÚLTIPLE', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'CAR�CTER', 'CARÁCTER', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'D�LARES', 'DÓLARES', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'COMPA�IA', 'COMPAÑIA', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'ECON�MICO', 'ECONÓMICO', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'ART�CULO', 'ARTÍCULO', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'ADMINISTRACI�N', 'ADMINISTRACIÓN', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'DIN�MICO ', 'DINÁMICO ', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'AUDITOR�A', 'AUDITORÍA', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'FEDERACI�N', 'FEDERACIÓN', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'UNI�N', 'UNIÓN', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'TRAV�S ', 'TRAVÉS ', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'ELECTR�NICO ', 'ELECTRÓNICO', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'C�MO  ', 'CÓMO', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'CR�DITO', 'CRÉDITO', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'C�MO', ' CÓMO', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'AN�NIMA', 'ANÓNIMA', regex=False)
+df["NOMLARGO"] = df["NOMLARGO"].str.replace(r'ESPA�OL', 'ESPAÑOL', regex=False)
+
+
+df["NOMLARGO"] = df["NOMLARGO"].apply(lambda x: x.upper())
+
 ### Filtrar datos atípicos
 df_filtred_2 = df[df["CPZO_A"]  < 50000 ]
 
@@ -47,6 +83,7 @@ kpsTas = {
         "crecimiento":  round( ((monto_year_current - monto_last_year) / monto_last_year) * 100 , 1)
     }
 }
+
 ### agrupado fecha operaciones año mes vs contratos
 agrupado_año = (
     df_filtred_2.groupby(["AÑO_OPE"], as_index=False)

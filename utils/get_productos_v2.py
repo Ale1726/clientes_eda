@@ -6,7 +6,7 @@ from datetime import datetime
 import pandas as pd
 from sqlalchemy import create_engine
 
-
+sistema = ""
 querys_productos ={
     "SIAG": """
     WITH CLIENTES_ACTIVOS AS (
@@ -157,7 +157,7 @@ querys_productos ={
         	ORDER BY CODIGO_CLIENTE
         ) SELECT * FROM TAB_FINAL_CLIENTE_PROD
         """,
-        "TAS": """
+    "TAS": """
         WITH CLIENTES_ACTIVOS AS(
 			SELECT CUENTA, ESPROVEED, TIPINVE, NLINEA, NOMBRE, NOMLARGO, RFC 
 		    FROM TAS.CLIENTE cl
@@ -215,13 +215,10 @@ querys_productos ={
 			FROM CLIENTES_OPERACIONES_INST 
 			WHERE IORDEN IS NOT NULL
 			) SELECT * FROM TAB_FINAL
-		"""
+		""",
 }
 
-
-
 list_dbs_clt_activos = [db_siag, db_sirac, db_tas]
-
 path_exit = "/home/ale1726/proyects/datalake/clientes/data/productos"
 path_logs = "/home/ale1726/proyects/datalake/clientes/data/productos/logs"
 date_now = datetime.now().strftime("%d_%m_%Y") 
@@ -229,7 +226,7 @@ date_now = datetime.now().strftime("%d_%m_%Y")
 
 for database in list_dbs_clt_activos:
     try: 
-        path_exit_temp = os.path.join(path_exit, database["NAME"], "data", date_now)
+        path_exit_temp = os.path.join(path_exit, database["NAME"], "data_origen", date_now)
         os.makedirs(path_exit_temp, exist_ok=True)
         get_table(path_exit = path_exit_temp , db = database, name_archivo = f"productos_clientes_{database['NAME']}", query  = querys_productos[database["NAME"]])  
     except Exception as error:
@@ -238,3 +235,48 @@ for database in list_dbs_clt_activos:
         log_file =  os.path.join(path_exit_temp_log, f"errors_productos_{database['NAME']}_{date_now}.log")
         with open(log_file, 'a') as archivo:
             archivo.write(str(error))
+
+
+
+"""            
+query_sifc = 
+	WITH CLIENTES_ACTIVOS AS (
+		SELECT OID OID_CUSTOMERS, CUSTOMER_ID, LEGAL_NAME, DESCRIPTION, RFC, ADDRESS_DUMP 
+		FROM SIFC.CUSTOMERS 
+		WHERE CUSTOMER_STATUS = 'ACTIVE' 
+	), CLIENTES_ACCOUNTS AS (
+		SELECT CA.*, AC.OID OID_ACCOUNTS, AC.RFC RFC2
+		FROM CLIENTES_ACTIVOS CA
+		LEFT JOIN SIFC.ACCOUNTS AC ON CA.OID_CUSTOMERS = AC.CUSTOMER
+	), CLIENTES_TRANS AS (
+		SELECT CAC.*, "OID" ID_TRANSACTION, ENTRY_DATE FECHA_DE_ENTRADA, TA.ARRANGEMENT_DATE FECHA_DE_ACUERDO, 
+		TA.SETTLEMENT_DATE FECHA_DE_LIQUIDACION, PRI_SERIES_AGREEDATE FECHA_DE_ACUERDO_SERIE_PRI, 
+		SEC_SERIES_AGREEDATE FECHA_DE_ACUERDO_SERIE_SEC, TRANSACTION_END_DATE FECHA_DE_FIN_DE_TRANSACCION, 
+		TRANSACTION_RATE TASA_DE_TRANSACCION, TX_COMMENTS COMENTARIOS_TX, TX_CONCEPT CONCEPTO_TX, 
+		TRUST_GOAL OBJETIVO_DEL_FIDEICOMISO, TX_SUBTYPE SUBTIPO_TX, COMMISIONS_AMOUNT MONTO_DE_COMISIONES, 
+		FUT_CLEAN_INTEREST INTERES_LIMPIO_FUTURO, USED_SURPLUS EXCEDENTE_UTILIZADO, DOLLARS_AMOUNT MONTO_EN_DOLARES, 
+		DOLLARS_EX_RATE TASA_DE_CAMBIO_DOLARES, PRI_SERIES_AMOUNT MONTO_SERIE_PRI, GROSS_AMOUNT MONTO_BRUTO, 
+		ORDERED_AMOUNT MONTO_ORDENADO
+		FROM CLIENTES_ACCOUNTS CAC
+		LEFT JOIN SIFC.TRANSACTIONS TA ON TA.PARTY_ACCOUNT = CAC.OID_ACCOUNTS
+	), CLIENTES_DISP AS (
+		SELECT CTR.*, PAYD."OID" ID_DISPERSION, PAYD.AMOUNT MONTO_DISPERSION, PAYD.BENEFICIARY_NAME NOMBRE_DE_BENEFICIARIO, PAYD.RFC RFC_BENEFICIARIO
+		FROM CLIENTES_TRANS CTR
+		LEFT JOIN SIFC.PAYMENT_DISPERSIONS PAYD ON PAYD."TRANSACTION" = CTR.ID_TRANSACTION
+	) SELECT * FROM CLIENTES_DISP WHERE ID_TRANSACTION IS NOT NULL
+
+
+try:
+    path_exit_temp = os.path.join(path_exit, database["NAME"], "data_origen", date_now)
+    os.makedirs(path_exit_temp, exist_ok=True)
+    get_table("/home/ale1726/proyects/datalake/clientes/data/productos/SIFC", db_sifc, "productos_sifc", query=query_sifc)
+except Exception as error:
+        path_exit_temp_log = os.path.join(path_exit, database["NAME"], "logs", date_now)
+        os.makedirs(path_exit_temp_log, exist_ok=True)
+        log_file =  os.path.join(path_exit_temp_log, f"errors_productos_{database['NAME']}_{date_now}.log")
+        with open(log_file, 'a') as archivo:
+            archivo.write(str(error))
+
+
+
+"""

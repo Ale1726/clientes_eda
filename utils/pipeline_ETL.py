@@ -10,6 +10,10 @@ from clt_repetidos import *
 from gd import * 
 from datetime import datetime
 import cx_Oracle
+import subprocess
+import sys
+
+
 
 def transformacion_clientes_meca(df, ruta_exit):
     df = df.apply(lambda x: x.upper() if isinstance(x, str) else x)
@@ -164,7 +168,6 @@ def transformacion_clientes_sirac(df, ruta_exit):
                                                     row["RAZON_SOCIAL"] if row["TIPO_PERSONA"] == 7
                                                     else f'{row["NOMBRES"]} {row["PRIMER_APELLIDO"]} {row["SEGUNDO_APELLIDO"]}'
                                                     ),axis=1)
-    df["RFC"] = df["NUMERO_IDENTIFICACION"]
     map_genero = {"F": "FEMENINO", "M": "MASCULINO", "N/A": "NO APLICA"}
     df["GENERO"] = df["GENERO"].apply(lambda x: map_genero.get(x,"NO_APLICA"))
     df["RFC"] = df["RFC"].apply(lambda x: normalizar_RFC(x) if pd.notna(x) and verificar_rfc(normalizar_RFC(x)) else "XXXXXXXXXXXXX")
@@ -210,11 +213,14 @@ def transformacion_clientes_tas(tas_clientes, ruta_exit, db_tas=db_tas):
     cursor = conn.cursor()
     cursor.execute(query2)
     columnas_fapoderado = [columna[0] for columna in cursor.description]
-    fapoderado =   pd.DataFrame(cursor.fetchall(), columns=columnas_fapoderado)
+    fapoderado = pd.DataFrame(cursor.fetchall(), columns=columnas_fapoderado)
     cursor.close()
     conn.close()
+    
     representa_legal = fapoderado.groupby('NUMERO_CLIENTE')['REPRESENTANTE_LEGAL'].apply(lambda x: ', '.join(x)).reset_index()
+    
     df = pd.merge(tas_clientes, representa_legal, on="NUMERO_CLIENTE", how="left")
+    
     df["NOMBRE_O_RAZON_SOCIAL"] = df["NOMLARGO"]
     df["REPRESENTANTE_LEGAL"] = df["REPRESENTANTE_LEGAL_y"]
     df["REPRESENTANTE_LEGAL"] = df["REPRESENTANTE_LEGAL"].apply(lambda x: " -- ".join(sorted(set(c.strip() for c in x.split(",") if c.strip() != 'NA' and c.strip()  != "Datos de la Escritura"))) if "," in str(x) else x)
@@ -358,7 +364,13 @@ def limpieza():
     
    
 if __name__ == "__main__":
-    path_dfs = "/home/ale1726/proyects/datalake/clientes/data/clientes_activos/19_03_2025" 
+    
+    if len(sys.argv) < 2:
+        path_dfs = "/home/ale1726/proyects/datalake/clientes/data/clientes_activos/19_03_2025" 
+    
+    path_dfs = sys.argv[1]
+    
+    print(path_dfs)
 
     
     ruta_exit = "/home/ale1726/proyects/datalake/clientes/data/ETL"
@@ -394,6 +406,14 @@ if __name__ == "__main__":
     dataframes = [df_mecaT, df_simsT, df_sipeT, df_siracT, df_soiT, df_tasT, df_siagT] 
     
     union_tablas_clientes(dataframes, "NOMBRE_O_RAZON_SOCIAL", "NUMERO_CLIENTE", 95, path_exit_date_now)
+    
+                
+    
+    subprocess.run([
+        "python",
+        "/home/ale1726/proyects/datalake/clientes/clientes_eda/utils/pipeline_clientes_activos.py",
+        path_exit_date_now
+    ])
     
     
     
