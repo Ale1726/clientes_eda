@@ -71,6 +71,7 @@ querys_ctls_activos = {
 	FROM CLT_UNICOS_TEL
  	ORDER BY NOMBRE_O_RAZON_SOCIAL 
     """,  
+    
     "SOI"  : """ 
     WITH CLIENTES AS (
         SELECT sb.*, sp.PAPAIS
@@ -426,9 +427,7 @@ querys_ctls_activos = {
 
 
 list_dbs_clt_activos = [db_siag, db_soi, db_meca, db_sims, db_sipe, db_tas, db_sirac]
-
 path_exit = "/home/ale1726/proyects/datalake/clientes/data/clientes_activos"
-
 path_logs = "/home/ale1726/proyects/datalake/clientes/data/logs"
 
 date_now = datetime.now().strftime("%d_%m_%Y") 
@@ -439,6 +438,7 @@ os.makedirs(repositorio_data_clt, exist_ok=True)
 
 for database in list_dbs_clt_activos:
     try:
+       print(database["NAME"])
        get_table(path_exit = repositorio_data_clt  , db = database, name_archivo = f"Clientes_activos_{database['NAME']}" , query  = querys_ctls_activos[database["NAME"]])  
     except Exception as error:
         repositorio_log = os.path.join(path_logs, date_now)
