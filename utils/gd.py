@@ -3,7 +3,6 @@ import os
 import csv
 
 
-
 def get_table(path_exit: str, db: dict, name_archivo: str = None, name_table: str = None, query: str = None, batch_size: int = 10000):
     """
     Obtiene una tabla de una base de datos Oracle, ya sea mediante el nombre de la tabla o una consulta SQL. 
@@ -78,7 +77,6 @@ def get_table(path_exit: str, db: dict, name_archivo: str = None, name_table: st
     conn.close()
 
     return ruta_archivo
-
 
 def get_data_tas(database,path_exit, query, query2):
     conn = cx_Oracle.connect(user=database['USER'], password=database["PSSWD"], dsn=database["DSN"])

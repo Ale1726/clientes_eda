@@ -256,8 +256,7 @@ querys_productos = {
 			  FROM CON_SUBPRODUCTOS
 			) SELECT DISTINCT(AIO) FROM INFORMACION_GARANTIA ORDER BY AIO DESC
     """,
-    
-    
+
     }
 }
 

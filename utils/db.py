@@ -1,7 +1,5 @@
 import configparser
-
 config = configparser.ConfigParser()
-
 config.read('/home/ale1726/proyects/datalake/input/datalake.ini')
 
 # conexiones
@@ -29,7 +27,7 @@ db_sideca= {'NAME':config['sideca']['name'],'USER':config['sideca']['user'],'PSS
 db_sifc = {'NAME':config['sifc']['name'],'USER':config['sifc']['user'],'PSSWD':config['sifc']['psswd'],'DSN':config['sifc']['dsn'],'SCHEMA':config['sifc']['schema']}
 
 
-querys_ctls_activos = {
+qca = {
     "SIAG" : """
     WITH CLIENTES_ACTIVOS AS (
 	SELECT * 

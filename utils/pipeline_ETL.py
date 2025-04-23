@@ -61,7 +61,6 @@ def transformacion_clientes_meca(df, ruta_exit):
     df.to_csv(name_archivo, index=False)
 
 
-
 def transformacion_clientes_sims(df, ruta_exit):
     df["RFC"] = df["RFC"].apply(lambda x: x if pd.notna(x) else "XXXXXXXXXXXXX")
     df["CORREO_ELECTRONICO"] = df["CORREO_ELECTRONICO"].astype(str).apply(lambda x: x if "@" in x else pd.NA)
@@ -249,7 +248,6 @@ def transformacion_clientes_tas(tas_clientes, ruta_exit, db_tas=db_tas):
     df.to_csv(name_archivo, index=False)    
     
     
-
 def transformacion_clientes_siag(df, ruta_exit):
     tipo_financiera_sirac = {
     1: 'BANCOS',
@@ -369,12 +367,9 @@ if __name__ == "__main__":
         path_dfs = "/home/ale1726/proyects/datalake/clientes/data/clientes_activos/19_03_2025" 
     
     path_dfs = sys.argv[1]
-    
     print(path_dfs)
 
-    
-    ruta_exit = "/home/ale1726/proyects/datalake/clientes/data/ETL"
-    
+    ruta_exit = "/home/ale1726/proyects/datalake/clientes/data/ETL"    
     date_now = datetime.now().strftime("%d_%m_%Y") 
     path_exit_date_now =  os.path.join(ruta_exit, date_now)
     os.makedirs(path_exit_date_now, exist_ok=True)
