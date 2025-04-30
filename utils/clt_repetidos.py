@@ -3,6 +3,9 @@ from fuzzywuzzy import fuzz
 import pandas as pd
 import re
 import numpy as np
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from rapidfuzz import process, fuzz
+
 
 
 def normalizar_cadena(cadena):
@@ -191,3 +194,53 @@ def agregar_asociaciones_clientes(clt_repetidos, df):
     drops_ids = grouped_df_cts["ID1"].to_list() + [item for sublist in grouped_df_cts["IDS_ASOCIADOS"] for item in sublist]
     return df_resul, drops_ids
     
+def fuzzy_match_cliente(cliente, df_clientes_base, nombres, col_name, col_uuid, ratio_min):
+    """
+    Función para buscar coincidencias de UN cliente.
+    """
+    resultado = []
+    
+    coincidencias = process.extract(
+        cliente,
+        nombres,
+        scorer=fuzz.ratio,
+        score_cutoff=ratio_min,
+        limit=None
+    )
+    
+    for match_name, score, _ in coincidencias:
+        match_row = df_clientes_base.filter(pl.col(col_name) == match_name)
+        for row in match_row.iter_rows(named=True):
+            resultado.append({
+                'cliente_busqueda': cliente,
+                'cliente_encontrado': row["Nombre"],
+                'uuid_cliente': row[col_uuid],
+                'score': score,
+            }) 
+    return resultado
+
+def fuzzy_busqueda_paralelo(df_clientes_base, col_name, col_uuid, clientes_busqueda, ratio_min=85, num_workers=4):
+    """  
+    Busca coincidencias fuzzy de forma paralela entre clientes_busqueda y clientes_base.
+    
+    df_clientes_base: DataFrame de clientes base
+    col_name: Nombre de la columna en df_clientes_base que contiene los nombres de los clientes 
+    col_uuid: Nombre de la columna en df_clientes_base que contiene los UUIDs de los clientes
+    clientes_busqueda: Lista de nombres de clientes a buscar
+    ratio_min: Umbral mínimo de coincidencia
+    num_workers: Número de hilos a utilizar para la búsqueda paralela   
+    """
+    resultados = []
+    
+    nombres = set(df_clientes_base[col_name].to_list())
+
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = [
+            executor.submit(fuzzy_match_cliente, cliente, df_clientes_base, nombres, col_name, col_uuid, ratio_min)
+            for cliente in clientes_busqueda
+        ]
+
+        for future in as_completed(futures):
+            resultados.extend(future.result())
+
+    return pd.DataFrame(resultados)
