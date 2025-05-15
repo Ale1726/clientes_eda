@@ -95,7 +95,6 @@ def clean_simetria(df, identificador1:str, identificador2:str):
     df = pd.concat([df,df_temp],ignore_index=True)
     return df
 
-
 def clean_transition(df, identificador1:str, identificador2:str):
     parejas = [(id1,id2) for id1, id2 in zip(df[identificador1].to_list(),df[identificador2].to_list())]
     idx_clean =  clean_transition_aux(parejas)
@@ -104,7 +103,6 @@ def clean_transition(df, identificador1:str, identificador2:str):
     clean_df = df.loc[ix_2]
     return clean_df
     
-
 def compara_nombres(df1, df2, col_nom_1, col_nom_2, id_cliente1, id_cliente2, criterio_similitud, dfs_equal = False):
     """
     Compara los nombres de dos dataframe mediante un umbral de similitud.
@@ -149,7 +147,6 @@ def compara_nombres(df1, df2, col_nom_1, col_nom_2, id_cliente1, id_cliente2, cr
         
     df_aux = clean_transition(df_aux,"NUM_CLIENTE_1","NUM_CLIENTE_2")
     return df_aux
-
 
 def agregar_asociaciones_clientes(clt_repetidos, df):
     grouped_df_cts = clt_repetidos.groupby(["ID1","NUM_CLIENTE_1"]).agg(

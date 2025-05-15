@@ -235,7 +235,7 @@ def transformacion_clientes_tas(tas_clientes, ruta_exit, db_tas=db_tas):
            'ENTIDAD_FEDERATIVA', 'CODIGO_POSTAL', 'PAIS', 'TELEFONO',
            'CORREO_ELECTRONICO', 'RFC', 'CURP', 'FIEL', 'REPRESENTANTE_LEGAL',
            'TIPO_PERSONA', 'PRODUCTO_CONTRATADO',
-           'SISTEMA_ORIGEN', 'FECHA_DE_ACTUALIZACION']
+           'SISTEMA_ORIGEN', 'FECHA_DE_ACTUALIZACION'] 
     df = df[col_final]
     clt_repetidos = compara_nombres(df, df, "NOMBRE_O_RAZON_SOCIAL", "NOMBRE_O_RAZON_SOCIAL","NUMERO_CLIENTE","NUMERO_CLIENTE", 100, True)
     if not clt_repetidos.empty:
@@ -336,31 +336,7 @@ def union_tablas_clientes(dataframes, nombre_col, num_col, umbral, ruta_exit):
     name_archivo = os.path.join(ruta_exit,"CLientesT_FINAL_ACTIVOS.csv")  
     df_combinado.to_csv(name_archivo, index=False)    
     
-"""    
-def union_tablas_clientes(dataframes, nombre_col, num_col, umbral, ruta_exit):
-    df_combinado = dataframes[0]
-    
-    for df in dataframes[1:]:
-        clt_repetidos = compara_nombres(df_combinado, df, nombre_col, nombre_col, num_col, num_col, umbral)
-        df_combinado = pd.concat([df_combinado, df], ignore_index=True)
-        
-        if not clt_repetidos.empty:
-            df_resul, drops_ids = agregar_asociaciones_clientes(clt_repetidos, df_combinado)
-            df_combinado = df_combinado.drop(drops_ids)
-            df_combinado = pd.concat([df_combinado, df_resul], ignore_index=True)
-        
-        df_combinado = df_combinado.sort_values(nombre_col)
-        
-    columnas  = ["ID_DL"] + df_combinado.columns.tolist()
-    df_combinado["ID_DL"] = df_combinado.index + 1
-    df_combinado = df_combinado[columnas]
-    name_archivo = os.path.join(ruta_exit,"CLientesT_FINAL_ACTIVOS.csv")  
-    df_combinado.to_csv(name_archivo, index=False) """ 
-    
-def limpieza():
-    print()     
-    
-   
+
 if __name__ == "__main__":
     
     if len(sys.argv) < 2:
