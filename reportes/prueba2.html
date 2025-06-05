@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Calidad de Datos – Tablas Vacías</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Feather Icons CDN -->
+  <script src="https://unpkg.com/feather-icons"></script>
+  <style>
+    body.dark {
+      background-color: #18181b;
+      color: #fafafa;
+    }
+    body.dark .bg-white {
+      background-color: #23232a !important;
+      color: #fafafa !important;
+    }
+    body.dark .bg-gray-50 {
+      background-color: #18181b !important;
+    }
+    body.dark .text-gray-900, body.dark .text-gray-400, body.dark .text-gray-500, body.dark .text-gray-700 {
+      color: #fafafa !important;
+    }
+    body.dark .border {
+      border-color: #3b3b4d !important;
+    }
+    body.dark .shadow {
+      box-shadow: 0 2px 8px 0 #18181b22 !important;
+    }
+    body.dark .hover\:bg-blue-100:hover {
+      background-color: #293860 !important;
+      color: #fff !important;
+    }
+    body.dark .bg-blue-600 {
+      background-color: #243290 !important;
+    }
+    body.dark .bg-blue-200 {
+      background-color: #334155 !important;
+      color: #fff !important;
+    }
+    body.dark .bg-gray-200 {
+      background-color: #2c2c36 !important;
+      color: #fff !important;
+    }
+    body.dark .bg-blue-900\/40 {
+      background-color: #232355aa !important;
+    }
+    body.dark .bg-blue-800\/60 {
+      background-color: #24327ba0 !important;
+    }
+    body.dark .bg-gradient-to-r {
+      background: linear-gradient(to right, #334155, #1e293b);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+  <!-- Sidebar -->
+  <aside class="fixed top-0 left-0 h-full w-16 flex flex-col items-center bg-white shadow z-20">
+    <nav class="flex flex-col gap-8 mt-10">
+      <i data-feather="home" class="w-6 h-6"></i>
+      <i data-feather="bar-chart-2" class="w-6 h-6"></i>
+      <i data-feather="filter" class="w-6 h-6"></i>
+      <i data-feather="database" class="w-6 h-6"></i>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="ml-16 p-4">
+    <!-- Encabezado -->
+    <header class="bg-gradient-to-r from-blue-700 to-blue-400 rounded-xl mb-6 px-8 py-6 shadow flex flex-col md:flex-row md:items-center md:justify-between">
+      <h1 class="text-2xl font-bold text-white mb-2 md:mb-0">Dashboard Calidad de Datos</h1>
+      <div class="flex gap-3">
+        <button id="btn-export" class="bg-white text-blue-600 px-4 py-2 rounded shadow hover:bg-blue-50 transition">Exportar CSV</button>
+        <button id="toggle-dark" class="bg-blue-900/40 text-white px-4 py-2 rounded shadow hover:bg-blue-800/60 transition">Modo oscuro</button>
+      </div>
+    </header>
+
+    <!-- Filtros de sistemas -->
+    <section id="sistemas-filtros" class="flex flex-wrap gap-2 mb-6"></section>
+
+    <!-- Layout principal: gráfica + indicadores -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Gráfica principal -->
+      <div class="col-span-2 bg-white rounded-xl shadow p-6">
+        <h2 class="text-lg font-semibold mb-4">Proporción de Tablas Vacías por Sistema</h2>
+        <canvas id="grafico-tablas" class="w-full h-80"></canvas>
+      </div>
+      <!-- Indicadores destacados -->
+      <div class="flex flex-col gap-4">
+        <div class="rounded-xl bg-white shadow px-6 py-4 text-center">
+          <p class="text-gray-400">TOTAL DE TABLAS</p>
+          <p id="ind-total" class="text-2xl font-bold">0</p>
+        </div>
+        <div class="rounded-xl bg-white shadow px-6 py-4 text-center">
+          <p class="text-gray-400">TABLAS VACÍAS</p>
+          <p id="ind-vacias" class="text-2xl font-bold">0</p>
+        </div>
+        <div class="rounded-xl bg-white shadow px-6 py-4 text-center">
+          <p class="text-gray-400">TABLAS NO VACÍAS</p>
+          <p id="ind-novacias" class="text-2xl font-bold">0</p>
+        </div>
+        <div class="rounded-xl bg-white shadow px-6 py-4 text-center">
+          <p class="text-gray-400">% TABLAS VACÍAS</p>
+          <p id="ind-porcentaje" class="text-2xl font-bold">0%</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tabla de estadísticas -->
+    <section class="mt-10 md:w-1/2 mx-auto">
+      <h3 class="text-lg font-semibold mb-2">Estadísticas Generales</h3>
+      <table class="min-w-full bg-white rounded-xl shadow text-sm">
+        <tbody id="tabla-estadisticas"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    // ----- DATOS DE EJEMPLO -----
+    const dataCalidad = [
+      { sistema: "SORI", total_tablas: 300, tablas_vacias: 120, tablas_no_vacias: 180 },
+      { sistema: "SIAG", total_tablas: 200, tablas_vacias: 80, tablas_no_vacias: 120 },
+      { sistema: "SIRAC", total_tablas: 150, tablas_vacias: 50, tablas_no_vacias: 100 },
+      { sistema: "TAS", total_tablas: 110, tablas_vacias: 35, tablas_no_vacias: 75 },
+      { sistema: "MECA", total_tablas: 250, tablas_vacias: 80, tablas_no_vacias: 170 },
+      { sistema: "SIMS", total_tablas: 180, tablas_vacias: 90, tablas_no_vacias: 90 },
+      { sistema: "SOI", total_tablas: 170, tablas_vacias: 40, tablas_no_vacias: 130 },
+      { sistema: "SIPE", total_tablas: 90, tablas_vacias: 60, tablas_no_vacias: 30 },
+      { sistema: "SD", total_tablas: 240, tablas_vacias: 100, tablas_no_vacias: 140 },
+      { sistema: "FAC", total_tablas: 130, tablas_vacias: 55, tablas_no_vacias: 75 },
+      { sistema: "SAD", total_tablas: 85, tablas_vacias: 25, tablas_no_vacias: 60 },
+      { sistema: "BPR", total_tablas: 130, tablas_vacias: 45, tablas_no_vacias: 85 },
+      { sistema: "HDC", total_tablas: 75, tablas_vacias: 2, tablas_no_vacias: 73 },
+      { sistema: "BDP", total_tablas: 88, tablas_vacias: 5, tablas_no_vacias: 83 },
+      { sistema: "PIR", total_tablas: 88, tablas_vacias: 7, tablas_no_vacias: 81 },
+      { sistema: "BAN", total_tablas: 12, tablas_vacias: 1, tablas_no_vacias: 11 }
+    ];
+
+    // ----- VARIABLES DE ESTADO -----
+    let sistemasSeleccionados = dataCalidad.map(d => d.sistema);
+
+    const colores = {
+      vacias: "rgba(56, 189, 248, 0.85)",    // turquesa
+      novacias: "rgba(30, 64, 175, 0.9)"     // azul oscuro
+    };
+
+    // --- FILTROS DE SISTEMAS ---
+    const filtros = document.getElementById('sistemas-filtros');
+    function renderFiltros() {
+      filtros.innerHTML = '';
+      dataCalidad.forEach(d => {
+        const btn = document.createElement('button');
+        btn.textContent = d.sistema;
+        btn.className =
+          "px-4 py-1 rounded-full border border-blue-400 text-blue-700 font-semibold shadow-sm transition bg-white hover:bg-blue-100 mb-1 " +
+          (sistemasSeleccionados.includes(d.sistema) ? "bg-blue-200" : "");
+        btn.onclick = () => toggleSistema(d.sistema);
+        filtros.appendChild(btn);
+      });
+      // Botón seleccionar todo
+      const btnAll = document.createElement('button');
+      btnAll.textContent = "Seleccionar Todo";
+      btnAll.className = "px-3 py-1 rounded-full border bg-blue-600 text-white font-semibold shadow-sm hover:bg-blue-800 ml-2";
+      btnAll.onclick = () => { sistemasSeleccionados = dataCalidad.map(d => d.sistema); render(); };
+      filtros.appendChild(btnAll);
+      // Botón limpiar filtros
+      const btnNone = document.createElement('button');
+      btnNone.textContent = "Eliminar Filtros";
+      btnNone.className = "px-3 py-1 rounded-full border bg-gray-200 text-gray-700 font-semibold shadow-sm hover:bg-gray-300 ml-1";
+      btnNone.onclick = () => { sistemasSeleccionados = []; render(); };
+      filtros.appendChild(btnNone);
+    }
+    function toggleSistema(sis) {
+      if (sistemasSeleccionados.includes(sis)) {
+        sistemasSeleccionados = sistemasSeleccionados.filter(s => s !== sis);
+      } else {
+        sistemasSeleccionados.push(sis);
+      }
+      render();
+    }
+
+    // --- GRÁFICA PRINCIPAL ---
+    let grafico;
+    function renderGrafico(datos) {
+      const ctx = document.getElementById('grafico-tablas').getContext('2d');
+      if (grafico) grafico.destroy();
+      // Ordena por % de vacías descendente
+      const datosOrdenados = [...datos].sort((a,b) => (b.tablas_vacias/b.total_tablas)-(a.tablas_vacias/a.total_tablas));
+      const labels = datosOrdenados.map(d => d.sistema);
+      grafico = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: "Tablas Vacías",
+              data: datosOrdenados.map(d => d.tablas_vacias),
+              backgroundColor: colores.vacias,
+              stack: 'Stack 0',
+            },
+            {
+              label: "Tablas No Vacías",
+              data: datosOrdenados.map(d => d.tablas_no_vacias),
+              backgroundColor: colores.novacias,
+              stack: 'Stack 0',
+            }
+          ]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                afterBody: function(context) {
+                  const i = context[0].dataIndex;
+                  const d = datosOrdenados[i];
+                  return [
+                    `Tab Total: ${d.total_tablas}`,
+                    `%TV: ${((d.tablas_vacias/d.total_tablas)*100).toFixed(1)}%`
+                  ];
+                }
+              }
+            },
+            legend: { display: true }
+          },
+          scales: {
+            x: { stacked: true, beginAtZero: true },
+            y: { stacked: true }
+          }
+        }
+      });
+    }
+
+    // --- INDICADORES DESTACADOS ---
+    function renderIndicadores(datos) {
+      const total = datos.reduce((acc, d) => acc + d.total_tablas, 0);
+      const vacias = datos.reduce((acc, d) => acc + d.tablas_vacias, 0);
+      const novacias = datos.reduce((acc, d) => acc + d.tablas_no_vacias, 0);
+      document.getElementById('ind-total').textContent = total;
+      document.getElementById('ind-vacias').textContent = vacias;
+      document.getElementById('ind-novacias').textContent = novacias;
+      document.getElementById('ind-porcentaje').textContent = total ? ((vacias/total)*100).toFixed(1) + "%" : "0%";
+    }
+
+    // --- TABLA DE ESTADÍSTICAS ---
+    function calcularEstadisticas(datos) {
+      const valoresVac = datos.map(d => d.tablas_vacias);
+      const total = datos.reduce((acc, d) => acc + d.total_tablas, 0);
+      const vacias = datos.reduce((acc, d) => acc + d.tablas_vacias, 0);
+      const novacias = datos.reduce((acc, d) => acc + d.tablas_no_vacias, 0);
+      const porcentaje = total ? ((vacias/total)*100) : 0;
+      const mediaPct = datos.length ? (datos.reduce((acc, d) => acc + (d.tablas_vacias/d.total_tablas)*100, 0)/datos.length) : 0;
+      const desvStd = stdDev(valoresVac);
+      const max = Math.max(...valoresVac);
+      const min = Math.min(...valoresVac);
+      const q1 = quantile(valoresVac, 0.25);
+      const q2 = quantile(valoresVac, 0.5);
+      const q3 = quantile(valoresVac, 0.75);
+
+      return [
+        { desc: "Número de sistemas", val: datos.length },
+        { desc: "Total de tablas", val: total },
+        { desc: "Total de tablas vacías", val: vacias },
+        { desc: "Total de tablas no vacías", val: novacias },
+        { desc: "Promedio de % de tablas vacías", val: mediaPct.toFixed(1) + "%" },
+        { desc: "Desviación estándar de tablas vacías", val: desvStd.toFixed(1) },
+        { desc: "Máximo de tablas vacías en un sistema", val: max },
+        { desc: "Mínimo de tablas vacías en un sistema", val: min },
+        { desc: "Percentil 25 (Q1) de tablas vacías", val: q1 },
+        { desc: "Percentil 50 (mediana) de tablas vacías", val: q2 },
+        { desc: "Percentil 75 (Q3) de tablas vacías", val: q3 }
+      ];
+    }
+    function renderTablaEstadisticas(datos) {
+      const stats = calcularEstadisticas(datos);
+      const tbody = document.getElementById('tabla-estadisticas');
+      tbody.innerHTML = '';
+      stats.forEach(s => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td class="border px-4 py-2 text-gray-500">${s.desc}</td>
+                         <td class="border px-4 py-2 font-bold text-right">${s.val}</td>`;
+        tbody.appendChild(row);
+      });
+    }
+    // Utilidades estadísticas
+    function stdDev(arr) {
+      if (arr.length === 0) return 0;
+      const m = arr.reduce((a,b) => a+b,0)/arr.length;
+      return Math.sqrt(arr.map(x => Math.pow(x-m,2)).reduce((a,b)=>a+b,0)/arr.length);
+    }
+    function quantile(arr, q) {
+      if (!arr.length) return 0;
+      const a = arr.slice().sort((a,b) => a-b);
+      const pos = (a.length - 1) * q;
+      const base = Math.floor(pos);
+      if (a[base+1] !== undefined) return (a[base] + a[base+1])/2;
+      return a[base];
+    }
+
+    // --- RENDER PRINCIPAL ---
+    function render() {
+      const datos = dataCalidad.filter(d => sistemasSeleccionados.includes(d.sistema));
+      renderFiltros();
+      renderGrafico(datos);
+      renderIndicadores(datos);
+      renderTablaEstadisticas(datos);
+    }
+
+    // --- EXPORTAR CSV ---
+    document.addEventListener("DOMContentLoaded", () => {
+      render();
+      feather.replace();
+      document.getElementById("btn-export").onclick = function() {
+        const datos = dataCalidad.filter(d => sistemasSeleccionados.includes(d.sistema));
+        let csv = "Sistema,Total Tablas,Tablas Vacías,Tablas No Vacías\n";
+        datos.forEach(d => {
+          csv += `${d.sistema},${d.total_tablas},${d.tablas_vacias},${d.tablas_no_vacias}\n`;
+        });
+        const blob = new Blob([csv], {type: 'text/csv'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "tablas_sistemas.csv";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+
+      // --- MODO OSCURO ---
+      document.getElementById("toggle-dark").onclick = function() {
+        document.body.classList.toggle("dark");
+      };
+    });
+  </script>
+</body>
+</html>
